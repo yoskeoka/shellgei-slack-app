@@ -19,6 +19,13 @@ const app = new App({
   logLevel: LogLevel.DEBUG,
 });
 
+// mask sensitive env vars on this process
+process.env.SLACK_BOT_TOKEN = '';
+process.env.SLACK_SIGNING_SECRET = '';
+process.env.AWS_ACCESS_KEY_ID = '';
+process.env.AWS_SECRET_ACCESS_KEY = '';
+process.env.AWS_SESSION_TOKEN = '';
+
 const server = awsServerlessExpress.createServer(expressReceiver.app);
 export const handler = (
   event: APIGatewayProxyEvent,
