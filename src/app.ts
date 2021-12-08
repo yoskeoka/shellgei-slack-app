@@ -62,6 +62,12 @@ function formatRes(cmd: string, result: string): string {
 import * as childProcess from 'child_process';
 
 async function execCommand(cmd: string): Promise<string> {
+  try {
+    process.chdir('/');
+  } catch (e) {
+    console.log(e);
+  }
+
   return util
     .promisify(childProcess.exec)(cmd, {shell: '/bin/bash'})
     .then((result) => head(result.stdout, 15))
