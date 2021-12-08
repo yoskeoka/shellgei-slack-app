@@ -23,12 +23,10 @@ RUN <<EOF
     chmod +x /.aws-lambda-rie/aws-lambda-rie
 EOF
 
-WORKDIR /aws-lambda-ric
-RUN npm install aws-lambda-ric
-
 WORKDIR ${FUNCTION_DIR}
 
 COPY . ${FUNCTION_DIR}
+RUN npm install aws-lambda-ric
 RUN npm install
 RUN npm run build
 
@@ -40,7 +38,6 @@ WORKDIR ${FUNCTION_DIR}
 
 RUN mkdir /images
 
-COPY --from=builder /aws-lambda-ric ${FUNCTION_DIR}
 COPY --from=builder ${FUNCTION_DIR} ${FUNCTION_DIR}
 COPY --from=builder ${FUNCTION_DIR}/dist/* ${FUNCTION_DIR}
 COPY --from=builder /.aws-lambda-rie/aws-lambda-rie /aws-lambda/aws-lambda-rie
