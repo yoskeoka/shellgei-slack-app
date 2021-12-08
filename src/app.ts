@@ -64,8 +64,12 @@ import * as childProcess from 'child_process';
 async function execCommand(cmd: string): Promise<string> {
   return util
     .promisify(childProcess.exec)(cmd)
-    .then((result) => result.stdout)
-    .catch((e: childProcess.ExecException) => e.message);
+    .then((result) => head(result.stdout, 15))
+    .catch((e: childProcess.ExecException) => head(e.message, 15));
+}
+
+function head(s: string, n: number): string {
+  return s.split('\n').slice(0, n).join('\n');
 }
 
 if (process.env.ENVCODE === 'local') {
