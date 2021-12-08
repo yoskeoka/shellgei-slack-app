@@ -36,7 +36,7 @@ FROM theoldmoon0602/shellgeibot:latest
 ARG FUNCTION_DIR
 WORKDIR ${FUNCTION_DIR}
 
-RUN mkdir /images
+RUN mkdir /images && chmod a+rw /images
 
 COPY --from=builder ${FUNCTION_DIR} ${FUNCTION_DIR}
 COPY --from=builder ${FUNCTION_DIR}/dist/* ${FUNCTION_DIR}
@@ -44,8 +44,11 @@ COPY --from=builder /.aws-lambda-rie/aws-lambda-rie /aws-lambda/aws-lambda-rie
 
 ENV ENVCODE=aws-lambda
 
-# add exec permission to other user
-RUN find /usr/local/bin ! -perm -o=x -exec chmod go+x {} \;
+# add exec permission to all user
+RUN <<EOF
+find /usr/local/bin ! -perm -o=x -exec chmod go+x {} \;
+chmod -R a+rx /root
+EOF
 
 COPY ./infra/aws-lambda/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
