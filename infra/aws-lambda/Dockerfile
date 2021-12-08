@@ -44,6 +44,9 @@ COPY --from=builder /.aws-lambda-rie/aws-lambda-rie /aws-lambda/aws-lambda-rie
 
 ENV ENVCODE=aws-lambda
 
+# add exec permission to other user
+RUN find /usr/local/bin ! -perm -o=x -exec chmod go+x {} \;
+
 COPY ./infra/aws-lambda/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
