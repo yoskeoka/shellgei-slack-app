@@ -63,7 +63,7 @@ import * as childProcess from 'child_process';
 
 async function execCommand(cmd: string): Promise<string> {
   return util
-    .promisify(childProcess.exec)(cmd)
+    .promisify(childProcess.exec)(cmd, {shell: '/bin/bash'})
     .then((result) => head(result.stdout, 15))
     .catch((e: childProcess.ExecException) => head(e.message, 15));
 }
