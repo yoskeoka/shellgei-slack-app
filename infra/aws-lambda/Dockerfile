@@ -36,7 +36,8 @@ FROM theoldmoon0602/shellgeibot:latest
 ARG FUNCTION_DIR
 WORKDIR ${FUNCTION_DIR}
 
-RUN mkdir /images && chmod a+rw /images
+ENV IMG_OUTPUT_DIR=/tmp/images
+ENV TEXTIMG_OUTPUT_DIR=${IMG_OUTPUT_DIR}
 
 COPY --from=builder ${FUNCTION_DIR} ${FUNCTION_DIR}
 COPY --from=builder ${FUNCTION_DIR}/dist/* ${FUNCTION_DIR}

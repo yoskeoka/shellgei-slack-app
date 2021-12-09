@@ -1,7 +1,9 @@
 /* eslint-disable no-console */
 /* eslint-disable import/no-internal-modules */
 import './env';
-import {App, ExpressReceiver, LogLevel} from '@slack/bolt';
+import {App, ExpressReceiver, LogLevel, MessageAttachment} from '@slack/bolt';
+import {WebClient, FilesUploadResponse} from '@slack/web-api';
+import {File} from '@slack/web-api/dist/response/FilesUploadResponse';
 import * as awsServerlessExpress from 'aws-serverless-express';
 import {APIGatewayProxyEvent, Context} from 'aws-lambda';
 
@@ -35,25 +37,107 @@ export const handler = (
 };
 
 import * as util from 'util';
+import * as fs from 'fs';
+import * as path from 'path';
 
-app.command('/shellgei', async ({command, ack, say, respond}) => {
-  ack();
+const imageOutputDir = process.env.IMG_OUTPUT_DIR || '/tmp/images';
 
-  const result = await execCommand(command.text);
-  const sayResult = await say(formatRes(command.text, result));
-  if (!sayResult.ok) {
-    await respond(
-      `error: '${sayResult.error}', message: '${sayResult.message}'`,
-    );
+app.command('/shellgei', async ({command, ack, say, respond, client}) => {
+  await ack();
+
+  try {
+    const result = await execCommand(command.text);
+
+    const imgUrls = await salvageAndUploadImages(command.text, client);
+    const attachments = imgUrls.map((f) => {
+      return {
+        title: f.name,
+        image_url: f.permalink,
+      } as MessageAttachment;
+    });
+    const sayResult = await say({
+      as_user: true,
+      text: formatRes(command.text, result),
+      attachments,
+    });
+    if (!sayResult.ok) {
+      await respond(
+        `error: '${sayResult.error}', message: '${sayResult.message}'`,
+      );
+    }
+  } catch (e) {
+    console.log(e);
+    await respond(`${e}`);
   }
 });
 
-app.command('/shellgei-dryrun', async ({command, ack, respond}) => {
-  ack();
+app.command('/shellgei-dryrun', async ({command, ack, respond, client}) => {
+  await ack();
 
-  const result = await execCommand(command.text);
-  await respond(formatRes(command.text, result));
+  try {
+    const result = await execCommand(command.text);
+    const imgUrls = await salvageAndUploadImages(command.text, client);
+    const attachments = imgUrls.map((f) => {
+      return {
+        title: f.name,
+        image_url: f.permalink,
+      } as MessageAttachment;
+    });
+    await respond({
+      text: formatRes(command.text, result),
+      attachments,
+    });
+  } catch (e) {
+    console.log(e);
+    await respond(`${e}`);
+  }
 });
+
+async function salvageAndUploadImages(
+  cmd: string,
+  client: WebClient,
+): Promise<File[]> {
+  let imgPathList = [] as string[];
+  try {
+    imgPathList = fs
+      .readdirSync(imageOutputDir)
+      .map((f) => path.join(imageOutputDir, f));
+  } catch (e) {
+    console.log(e);
+    return [];
+  }
+
+  const imgFiles = [] as File[];
+  const plist = [] as Promise<FilesUploadResponse>[];
+
+  for (const f of imgPathList) {
+    console.log('upload file: ', f);
+    const fd = fs.readFileSync(f);
+
+    const p = client.files.upload({
+      channels: '#shellgei_bot_images',
+      file: fd,
+      filename: path.basename(f),
+      title: path.basename(f),
+      initial_comment: `\`\`\`\n/shellgei ${cmd}\n\`\`\``,
+    });
+    plist.push(p);
+  }
+
+  await Promise.all(plist).then((resList) => {
+    resList.forEach((res) => {
+      if (res.ok && res.file) {
+        const f = res.file;
+        if (f) {
+          imgFiles.push(f);
+          console.log('uploaded file: ', f);
+        }
+      }
+    });
+  });
+
+  return imgFiles;
+}
 
 function formatRes(cmd: string, result: string): string {
   return `> ${cmd}\n${result}`;
@@ -64,6 +148,9 @@ import * as childProcess from 'child_process';
 async function execCommand(cmd: string): Promise<string> {
   try {
     process.chdir('/');
+    if (!fs.existsSync(imageOutputDir)) {
+      fs.mkdirSync(imageOutputDir);
+    }
   } catch (e) {
     console.log(e);
   }
