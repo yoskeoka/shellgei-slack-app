@@ -213,13 +213,13 @@ async function salvageAndUploadImages(
     });
   });
 
-  cleanTmpDir();
+  cleanTmpImagesDir();
 
   return imgFiles;
 }
 
-async function cleanTmpDir() {
-  await execCommand('rm -rf /tmp');
+async function cleanTmpImagesDir() {
+  await execCommand('rm -rf /tmp/images');
 }
 
 type User = {id: string; name?: string; imageUrl?: string};
