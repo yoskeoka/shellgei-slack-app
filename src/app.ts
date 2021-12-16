@@ -1,7 +1,17 @@
 /* eslint-disable no-console */
 /* eslint-disable import/no-internal-modules */
 import './env';
-import {App, ExpressReceiver, LogLevel, MessageAttachment} from '@slack/bolt';
+import {
+  AckFn,
+  App,
+  ExpressReceiver,
+  LogLevel,
+  MessageAttachment,
+  RespondArguments,
+  RespondFn,
+  SayFn,
+  SlashCommand,
+} from '@slack/bolt';
 import {WebClient, FilesUploadResponse} from '@slack/web-api';
 import {File} from '@slack/web-api/dist/response/FilesUploadResponse';
 import * as awsServerlessExpress from 'aws-serverless-express';
@@ -41,57 +51,90 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const imageOutputDir = process.env.IMG_OUTPUT_DIR || '/tmp/images';
+const imageShareSlackChannel = process.env.IMG_SHARE_SLACK_CHAN || '';
+const additionalHelpText = process.env.ADDITIONAL_HELP_TEXT || '';
 
-app.command('/shellgei', async ({command, ack, say, respond, client}) => {
+app.command('/shellgei', async ({client, command, ack, say, respond}) => {
+  await shellgeiCommand(client, command, ack, respond, say, false);
+});
+
+app.command(
+  '/shellgei-dryrun',
+  async ({client, command, ack, say, respond}) => {
+    await shellgeiCommand(client, command, ack, respond, say, true);
+  },
+);
+
+async function shellgeiCommand(
+  client: WebClient,
+  command: SlashCommand,
+  ack: AckFn<string | RespondArguments>,
+  respond: RespondFn,
+  say: SayFn,
+  dryRun: boolean,
+): Promise<void> {
   await ack();
 
   try {
-    const result = await execCommand(command.text);
+    const cmd = command.text.trim();
+    if (cmd.length == 0 || cmd == 'help') {
+      await respond(help());
+      return;
+    }
 
-    const imgUrls = await salvageAndUploadImages(command.text, client);
-    const attachments = imgUrls.map((f) => {
-      return {
-        title: f.name,
-        image_url: f.permalink,
-      } as MessageAttachment;
-    });
-    const sayResult = await say({
-      as_user: true,
-      text: formatRes(command.text, result),
-      attachments,
-    });
-    if (!sayResult.ok) {
-      await respond(
-        `error: '${sayResult.error}', message: '${sayResult.message}'`,
+    console.info('execute: ', cmd);
+
+    const result = await execCommand(cmd);
+    const r = formatRes(cmd, result);
+    let attachments = [] as MessageAttachment[];
+    if (r.attachments) {
+      attachments = attachments.concat(r.attachments);
+    }
+
+    if (imageShareSlackChannel) {
+      const imgFiles = await salvageAndUploadImages(cmd, client);
+
+      imgFiles.forEach((f) =>
+        attachments.push({
+          title: f.name,
+          image_url: f.permalink,
+        }),
       );
+    }
+
+    const text = head(r.text, 15);
+
+    if (dryRun) {
+      await respond({
+        text,
+        attachments,
+      });
+    } else {
+      await say({
+        text,
+        attachments,
+      });
     }
   } catch (e) {
     console.log(e);
     await respond(`${e}`);
   }
-});
+}
 
-app.command('/shellgei-dryrun', async ({command, ack, respond, client}) => {
-  await ack();
+function help(): string {
+  let helpText = `
+  Usage:\n
+  \`/shellgei help\` shows this help.\n
+  \`/shellgei [commands]\` executes commands with /bin/bash\n
+  \`/shellgei-dryrun [commands]\` executes commands with /bin/bash, but only show result to you\n
+  To attach image, write image file to \`${imageOutputDir}\` directory, using redirect \`>\`. e.g. \`${imageOutputDir}/img.png\`\n
+  `;
 
-  try {
-    const result = await execCommand(command.text);
-    const imgUrls = await salvageAndUploadImages(command.text, client);
-    const attachments = imgUrls.map((f) => {
-      return {
-        title: f.name,
-        image_url: f.permalink,
-      } as MessageAttachment;
-    });
-    await respond({
-      text: formatRes(command.text, result),
-      attachments,
-    });
-  } catch (e) {
-    console.log(e);
-    await respond(`${e}`);
+  if (additionalHelpText) {
+    helpText = helpText + `\n${additionalHelpText}`;
   }
-});
+  return helpText;
+}
 
 async function salvageAndUploadImages(
   cmd: string,
@@ -111,11 +154,11 @@ async function salvageAndUploadImages(
   const plist = [] as Promise<FilesUploadResponse>[];
 
   for (const f of imgPathList) {
-    console.log('upload file: ', f);
+    console.info('upload file: ', f);
     const fd = fs.readFileSync(f);
 
     const p = client.files.upload({
-      channels: '#shellgei_bot_images',
+      channels: imageShareSlackChannel,
       file: fd,
       filename: path.basename(f),
       title: path.basename(f),
@@ -130,17 +173,54 @@ async function salvageAndUploadImages(
         const f = res.file;
         if (f) {
           imgFiles.push(f);
-          console.log('uploaded file: ', f);
+          console.info('uploaded file: ', f);
         }
       }
     });
   });
 
+  cleanTmpDir();
+
   return imgFiles;
 }
 
-function formatRes(cmd: string, result: string): string {
-  return `> ${cmd}\n${result}`;
+async function cleanTmpDir() {
+  await execCommand('rm -rf /tmp');
+}
+
+type User = {id: string; name?: string; imageUrl?: string};
+
+async function getUserInfo(userId: string, client: WebClient): Promise<User> {
+  const user = await client.users.profile.get({user: userId});
+  if (user.ok && user.profile) {
+    const res = {
+      id: userId,
+      imageUrl: user.profile.image_24,
+      name: user.profile.display_name,
+    };
+
+    if (!res.imageUrl) {
+      res.imageUrl =
+        'https://api.slack.com/img/blocks/bkb_template_images/plants.png';
+    }
+
+    if (!res.name) {
+      res.name = userId;
+    }
+
+    return res;
+  }
+  return {id: userId};
+}
+
+function formatRes(
+  cmd: string,
+  result: string,
+): {text: string; attachments?: MessageAttachment[]} {
+  return {
+    text: `\`\`\`\n/shellgei ${cmd}\n\`\`\`\n`,
+    attachments: [{text: result}],
+  };
 }
 
 import * as childProcess from 'child_process';
@@ -157,8 +237,8 @@ async function execCommand(cmd: string): Promise<string> {
 
   return util
     .promisify(childProcess.exec)(cmd, {shell: '/bin/bash'})
-    .then((result) => head(result.stdout, 15))
-    .catch((e: childProcess.ExecException) => head(e.message, 15));
+    .then((result) => result.stdout)
+    .catch((e: childProcess.ExecException) => e.message);
 }
 
 function head(s: string, n: number): string {

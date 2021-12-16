@@ -31,6 +31,8 @@ export class ShellgeiSlackAppStack extends cdk.Stack {
         SLACK_BOT_TOKEN: process.env.SLACK_BOT_TOKEN || '',
         SLACK_SIGNING_SECRET: process.env.SLACK_SIGNING_SECRET || '',
         IMG_OUTPUT_DIR: process.env.IMG_OUTPUT_DIR || '',
+        IMG_SHARE_SLACK_CHAN: process.env.IMG_SHARE_SLACK_CHAN || '',
+        ADDITIONAL_HELP_TEXT: process.env.ADDITIONAL_HELP_TEXT || '',
       },
       timeout: cdk.Duration.seconds(10),
       logRetention: logs.RetentionDays.ONE_MONTH,
