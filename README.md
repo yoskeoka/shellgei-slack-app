@@ -93,6 +93,7 @@ Then, invite **shellgei_app** to the channel.
 
 ## Limitation
 
+- Does not have WRITE permission, but `/tmp`
 - The directory `/media` is not supported
 - **shebang** is not supported
 - `$TERM=dumb`

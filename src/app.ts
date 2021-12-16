@@ -159,8 +159,8 @@ function help(): string {
   let helpText = `
   Usage:\n
     \`/shellgei help\` shows this help.\n
-    \`/shellgei [commands]\` executes commands with /bin/bash\n
-    \`/shellgei-dryrun [commands]\` executes commands with /bin/bash, but only show result to you\n
+    \`/shellgei [commands]\` exec commands with /bin/bash\n
+    \`/shellgei-dryrun [commands]\` exec commands with /bin/bash, but only show result to you\n
     To attach image, write image file to \`${imageOutputDir}\` directory, using redirect \`>\`. e.g. \`${imageOutputDir}/img.png\`\n
   \n
   Installed commands:\n
