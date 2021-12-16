@@ -17,45 +17,6 @@ ShellGeiBot in Slack
 npm i
 ```
 
-## Create Slack App
-
-```yaml:manifest-example
-_metadata:
-  major_version: 1
-  minor_version: 1
-display_information:
-  name: shellgei_app
-  description: ShellGeiBot in Slack https://twitter.com/minyoruminyon
-  background_color: "#242324"
-features:
-  bot_user:
-    display_name: ShellGeiBot
-    always_online: false
-  slash_commands:
-    - command: /shellgei
-      url: https://5s6sd7r7y4.execute-api.ap-northeast-1.amazonaws.com/prod/slack/events
-      description: run shellgei. practice here https://websh.jiro4989.com/
-      usage_hint: help
-      should_escape: false
-    - command: /shellgei-dryrun
-      url: https://5s6sd7r7y4.execute-api.ap-northeast-1.amazonaws.com/prod/slack/events
-      description: run shellgei, but result appears only to you.
-      usage_hint: cowsay for i in $(seq 0 3); do matsuya; done
-      should_escape: false
-oauth_config:
-  scopes:
-    bot:
-      - commands
-      - chat:write
-      - chat:write.public
-      - users.profile:read
-      - files:write
-settings:
-  org_deploy_enabled: false
-  socket_mode_enabled: false
-  token_rotation_enabled: false
-```
-
 ## Create `.env` file
 
 ```sh
@@ -83,4 +44,47 @@ Deploy AWS Lambda Function.
 ```sh
 npm run bootstrap # only first time
 npm run deploy
+```
+
+## Create Slack App
+
+Create Slack App for your Slack Workspace.
+Use this manifest.yaml.
+You will need replace url section with your deployed stack output.
+
+```yaml:manifest-example
+_metadata:
+  major_version: 1
+  minor_version: 1
+display_information:
+  name: shellgei_app
+  description: ShellGeiBot in Slack https://twitter.com/minyoruminyon
+  background_color: "#242424"
+features:
+  bot_user:
+    display_name: ShellGeiBot
+    always_online: false
+  slash_commands:
+    - command: /shellgei
+      url: https://abcd12345.execute-api.<your-aws-region>.amazonaws.com/prod/slack/events
+      description: run shellgei. practice here https://websh.jiro4989.com/
+      usage_hint: help
+      should_escape: false
+    - command: /shellgei-dryrun
+      url: https://abcd12345.execute-api.<your-aws-region>.amazonaws.com/prod/slack/events
+      description: run shellgei, but result appears only to you.
+      usage_hint: cowsay for i in $(seq 0 3); do matsuya; done
+      should_escape: false
+oauth_config:
+  scopes:
+    bot:
+      - commands
+      - chat:write
+      - chat:write.public
+      - users.profile:read
+      - files:write
+settings:
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false
 ```
