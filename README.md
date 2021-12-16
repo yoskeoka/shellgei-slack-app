@@ -66,10 +66,19 @@ Edit `.env` file and replace with your Slack Bot Token & Signing Secret.
 
 ## Create slack channnel to upload images
 
-Create slack channnel which has the same name with the environment variable `$IMG_SHARE_SLACK_CHAN`.
+Create public slack channnel which has the same name as the environment variable `$IMG_SHARE_SLACK_CHAN`.
 Then, invite **shellgei_app** to the channel.
 
 ## Deploy to AWS Lambda
+
+Export AWS credentials.
+
+```sh
+export AWS_ACCESS_KEY_ID="AKIAIOSFODNN7EXAMPLE"
+export AWS_SECRET_ACCESS_KEY="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+```
+
+Deploy AWS Lambda Function.
 
 ```sh
 npm run bootstrap # only first time

@@ -82,7 +82,7 @@ async function shellgeiCommand(
       return;
     }
 
-    console.info('execute: ', cmd);
+    console.log('execute command: ', cmd);
 
     const result = await execCommand(cmd);
     const r = formatRes(cmd, result);
@@ -173,7 +173,7 @@ async function salvageAndUploadImages(
         const f = res.file;
         if (f) {
           imgFiles.push(f);
-          console.info('uploaded file: ', f);
+          console.log('uploaded file: ', f);
         }
       }
     });
