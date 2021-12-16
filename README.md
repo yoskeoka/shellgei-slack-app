@@ -97,3 +97,5 @@ Then, invite **shellgei_app** to the channel.
 - The directory `/media` is not supported
 - **shebang** is not supported
 - `$TERM=dumb`
+- Likely appears `/shellgei failed with the error "operation_timeout"`
+  - To avoid this error, set `$AWS_LAMBDA_PROVISIONED_CONCURRENT_EXECUTIONS` >= 1 (This will cost much more)

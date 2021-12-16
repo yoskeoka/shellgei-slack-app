@@ -38,6 +38,16 @@ export class ShellgeiSlackAppStack extends cdk.Stack {
       logRetention: logs.RetentionDays.ONE_MONTH,
     });
 
+    const provisionedConcurrentExecutions = Number(
+      process.env.AWS_LAMBDA_PROVISIONED_CONCURRENT_EXECUTIONS || '0',
+    );
+
+    if (provisionedConcurrentExecutions > 0) {
+      appLambda.currentVersion.addAlias('Alias', {
+        provisionedConcurrentExecutions: provisionedConcurrentExecutions,
+      });
+    }
+
     new apigateway.LambdaRestApi(this, 'slackApi', {
       handler: appLambda,
     });
