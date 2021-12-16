@@ -4,6 +4,8 @@ import './env';
 import {
   AckFn,
   App,
+  Block,
+  KnownBlock,
   ExpressReceiver,
   LogLevel,
   MessageAttachment,
@@ -85,7 +87,8 @@ async function shellgeiCommand(
     console.log('execute command: ', cmd);
 
     const result = await execCommand(cmd);
-    const r = formatRes(cmd, result);
+    const user = await getUserInfo(command.user_id, client);
+    const r = formatRes(cmd, user, result);
     let attachments = [] as MessageAttachment[];
     if (r.attachments) {
       attachments = attachments.concat(r.attachments);
@@ -102,7 +105,7 @@ async function shellgeiCommand(
       );
     }
 
-    const text = head(r.text, 15);
+    const text = r.text;
 
     if (dryRun) {
       await respond({
@@ -112,6 +115,7 @@ async function shellgeiCommand(
     } else {
       await say({
         text,
+        blocks: r.blocks,
         attachments,
       });
     }
@@ -119,6 +123,36 @@ async function shellgeiCommand(
     console.log(e);
     await respond(`${e}`);
   }
+}
+
+function execUserBlock(user: User, cmd: string): (Block | KnownBlock)[] {
+  return [
+    {
+      type: 'context',
+      elements: [
+        {
+          type: 'image',
+          image_url: user.imageUrl
+            ? user.imageUrl
+            : 'https://image.freepik.com/free-photo/red-drawing-pin_1156-445.jpg',
+          alt_text: user.name ? user.name : user.id,
+        },
+        {
+          type: 'plain_text',
+          text: `${user.name ? user.name : user.id}`,
+        },
+      ],
+    },
+    {
+      type: 'context',
+      elements: [
+        {
+          type: 'plain_text',
+          text: `> /shellgei ${cmd}`,
+        },
+      ],
+    },
+  ];
 }
 
 function help(): string {
@@ -215,11 +249,17 @@ async function getUserInfo(userId: string, client: WebClient): Promise<User> {
 
 function formatRes(
   cmd: string,
+  user: User,
   result: string,
-): {text: string; attachments?: MessageAttachment[]} {
+): {
+  text: string;
+  blocks?: (Block | KnownBlock)[];
+  attachments?: MessageAttachment[];
+} {
   return {
-    text: `\`\`\`\n/shellgei ${cmd}\n\`\`\`\n`,
-    attachments: [{text: result}],
+    text: `/shellgei ${cmd}\n`,
+    blocks: execUserBlock(user, cmd),
+    attachments: [{text: head(result.substring(0, 1000), 15)}],
   };
 }
 

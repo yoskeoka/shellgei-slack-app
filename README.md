@@ -48,8 +48,8 @@ oauth_config:
       - commands
       - chat:write
       - chat:write.public
+      - users.profile:read
       - files:write
-      - remote_files:write
 settings:
   org_deploy_enabled: false
   socket_mode_enabled: false
