@@ -90,3 +90,9 @@ settings:
 
 Create public slack channnel named `$IMG_SHARE_SLACK_CHAN`.
 Then, invite **shellgei_app** to the channel.
+
+## Limitation
+
+- The directory `/media` is not supported
+- **shebang** is not supported
+- `$TERM=dumb`
