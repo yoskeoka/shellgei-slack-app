@@ -2,6 +2,8 @@
 
 ShellGeiBot in Slack
 
+![running example](_images/ngram-example.png)
+
 ## Requirements
 
 - Node.js (>= v16)
@@ -24,11 +26,6 @@ cp .env.example .env
 ```
 
 Edit `.env` file and replace with your Slack Bot Token & Signing Secret.
-
-## Create slack channnel to upload images
-
-Create public slack channnel which has the same name as the environment variable `$IMG_SHARE_SLACK_CHAN`.
-Then, invite **shellgei_app** to the channel.
 
 ## Deploy to AWS Lambda
 
@@ -88,3 +85,8 @@ settings:
   socket_mode_enabled: false
   token_rotation_enabled: false
 ```
+
+## Create slack channnel to upload images
+
+Create public slack channnel named `$IMG_SHARE_SLACK_CHAN`.
+Then, invite **shellgei_app** to the channel.
