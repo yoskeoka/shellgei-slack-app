@@ -14,6 +14,10 @@ if (!fs.existsSync(confPath)) {
   console.warn('.env file does not exist at %s', confPath);
 }
 
+const lambdaExecutionTimeoutSec = Number(
+  process.env.AWS_LAMBDA_EXECUTION_TIMEOUT_SEC || 10,
+);
+
 export class ShellgeiSlackAppStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -34,7 +38,7 @@ export class ShellgeiSlackAppStack extends cdk.Stack {
         IMG_SHARE_SLACK_CHAN: process.env.IMG_SHARE_SLACK_CHAN || '',
         ADDITIONAL_HELP_TEXT: process.env.ADDITIONAL_HELP_TEXT || '',
       },
-      timeout: cdk.Duration.seconds(10),
+      timeout: cdk.Duration.seconds(lambdaExecutionTimeoutSec),
       logRetention: logs.RetentionDays.ONE_MONTH,
     });
 
