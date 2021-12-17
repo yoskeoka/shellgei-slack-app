@@ -96,6 +96,7 @@ Then, invite **shellgei_app** to the channel.
 - Does not have WRITE permission, but `/tmp`
 - The directory `/media` is not supported
 - **shebang** is not supported
+- Cannot use process substitution: `<()` or `>()`
 - `$TERM=dumb`
 - Likely appears `/shellgei failed with the error "operation_timeout"`
   - To avoid this error, set `$AWS_LAMBDA_PROVISIONED_CONCURRENT_EXECUTIONS` >= 1 (This will cost much more)
