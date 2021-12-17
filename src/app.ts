@@ -26,11 +26,22 @@ const expressReceiver = new ExpressReceiver({
   processBeforeResponse,
 });
 
+function parseLogLevel(ll: string): LogLevel {
+  switch (ll) {
+    case LogLevel.DEBUG:
+    case LogLevel.INFO:
+    case LogLevel.WARN:
+    case LogLevel.ERROR:
+      return <LogLevel>ll;
+  }
+  return LogLevel.INFO;
+}
+
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
   receiver: expressReceiver,
   processBeforeResponse,
-  logLevel: LogLevel.DEBUG,
+  logLevel: parseLogLevel(process.env.LOG_LEVEL || 'info'),
 });
 
 // mask sensitive env vars on this process
@@ -267,6 +278,7 @@ function formatRes(
 }
 
 import * as childProcess from 'child_process';
+import {Log} from '@slack/web-api/dist/response/TeamIntegrationLogsResponse';
 
 async function execCommand(cmd: string): Promise<string> {
   try {
