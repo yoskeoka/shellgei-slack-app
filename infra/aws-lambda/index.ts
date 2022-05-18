@@ -2,17 +2,7 @@ import * as cdk from '@aws-cdk/core';
 import * as lambda from '@aws-cdk/aws-lambda';
 import * as logs from '@aws-cdk/aws-logs';
 import * as apigateway from '@aws-cdk/aws-apigateway';
-
 import * as path from 'path';
-import * as fs from 'fs';
-import {config} from 'dotenv';
-
-const pathToConfig = '../../.env';
-const confPath = path.resolve(__dirname, pathToConfig);
-
-if (!fs.existsSync(confPath)) {
-  console.warn('.env file does not exist at %s', confPath);
-}
 
 const lambdaExecutionTimeoutSec = Number(
   process.env.AWS_LAMBDA_EXECUTION_TIMEOUT_SEC || 10,
@@ -22,7 +12,6 @@ export class ShellgeiSlackAppStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    config({path: confPath});
     const appLambda = new lambda.DockerImageFunction(this, 'appLambda', {
       functionName: 'shellgeiSlackAppFunction',
       code: lambda.DockerImageCode.fromImageAsset(
